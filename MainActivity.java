@@ -6,17 +6,15 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -37,7 +35,7 @@ public class MainActivity extends Activity
 
 	private int totalTime;
 
-	private MyCountDownTimer countDownTimer;
+	//private MyCountDownTimer countDownTimer;
 	private boolean start; // check weather started
 
 	private final int NOTI_ID = 100; // notification id
@@ -45,8 +43,9 @@ public class MainActivity extends Activity
 	private Vibrator vibrator;
 	
 	private MyService myService;
-	private boolean isBound;
+	//private boolean isBound;
 	private MyServiceConnection myServiceConnection;
+	private MyBroadcastReceiver myBroadcastReceiver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -80,10 +79,8 @@ public class MainActivity extends Activity
 
 		start = false;
 
-		isBound = false;
+		//isBound = false;
 		myServiceConnection = new MyServiceConnection();
-		
-		vibrator = (Vibrator) getApplication().getSystemService(Service.VIBRATOR_SERVICE);
 	}
 
 	// listener for watch the text ever change
@@ -182,21 +179,27 @@ public class MainActivity extends Activity
 			{
 				// bind service
 				Intent intent = new Intent(MainActivity.this, MyService.class);
-				intent.putExtra("TotalTime", getHoursString());
+				intent.putExtra("TotalTime", totalTime);
 				bindService(intent, myServiceConnection, Context.BIND_AUTO_CREATE);
 				
 				//Toast.makeText(MainActivity.this, "BindService", Toast.LENGTH_LONG).show();
 
-				countDown();
-
 				btnStart.setText("停止");
 			}
 
+			setUpBroadcastReceiver();
+			
 			setStart();
-
-			Log.i("haha", "jaja");
 		}
 	};
+	
+	private void setUpBroadcastReceiver()
+	{
+		IntentFilter intentFilter = new IntentFilter("time.CountDownTimer.powerCalculate");
+		myBroadcastReceiver = new MyBroadcastReceiver();
+		registerReceiver(myBroadcastReceiver, intentFilter);
+		
+	}
 
 	@Override
 	protected void onDestroy()
@@ -211,47 +214,16 @@ public class MainActivity extends Activity
 	{
 		if (vibrator != null)
 			vibrator.cancel();
-		if (countDownTimer != null)
-			countDownTimer.cancel();
+		//if (countDownTimer != null)
+			//countDownTimer.cancel();
 		btnStart.setText("開始倒數");
 		edtTime.setText(getHoursString());
 
 		vibrator = null;
-		countDownTimer = null;
+		//countDownTimer = null;
 
 		// 找到notification服務並結束
 		((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(NOTI_ID);
-	}
-
-	// count down
-	private void countDown()
-	{
-		Log.d("TotalTime", Integer.toString(totalTime));
-		countDownTimer = new MyCountDownTimer(totalTime /** 60*/ * 1000, 1000, vibrator);
-		countDownTimer.start();
-	}
-
-	// set notification
-	private void showNotification(String string)
-	{
-		Notification notification = new Notification(R.drawable.bear,
-												     "體力計算器執行中", 
-												     System.currentTimeMillis());
-
-		Intent intent = new Intent();
-		intent.setClass(this, MainActivity.class);
-		intent.setFlags(intent.FLAG_ACTIVITY_NEW_TASK);
-
-		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-				intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		notification.setLatestEventInfo(this,
-				getResources().getText(R.string.app_name), string,
-				pendingIntent);
-
-		NotificationManager notificationManager = (NotificationManager) this
-				.getSystemService(NOTIFICATION_SERVICE);
-		notificationManager.notify(NOTI_ID, notification); // 送出訊息並且設定notification編號
 	}
 
 	// change the state of start flag
@@ -268,14 +240,23 @@ public class MainActivity extends Activity
 		{
 			MyBinder binder = (MyBinder) iBinder;
 			myService = binder.getService();
-			isBound = true;
+			//isBound = true;
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name)
 		{
-			isBound = false;
+			//isBound = false;
 		}
-
+	}
+	
+	class MyBroadcastReceiver extends BroadcastReceiver
+	{
+		@Override
+		public void onReceive(Context context, Intent intent)
+		{
+			String time = intent.getStringExtra("remain_time");
+			edtTime.setText(time);
+		}
 	}
 }

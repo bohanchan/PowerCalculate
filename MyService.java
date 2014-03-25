@@ -3,15 +3,20 @@ package com.example.powercalculate;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.os.Vibrator;
 import android.util.Log;
 import android.widget.Toast;
 
 public class MyService extends Service
 {
 	private final String SERVICE_TAG = "SERVICE_TAG";
-	
 	private IBinder myBinder = new MyBinder();
+	private MyCountDownTimer countDownTimer;
+	private int totalTime;
+	private Vibrator vibrator;
+	private static final int VIBRATOR_TIME = 1000;
 	
 	class MyBinder extends Binder
 	{
@@ -26,7 +31,6 @@ public class MyService extends Service
 	{
 		super.onCreate();
 		Log.i(SERVICE_TAG , "Service onCreate()");
-		System.out.println("WTF");
 	}
 
 	@Override
@@ -48,6 +52,7 @@ public class MyService extends Service
 	public boolean onUnbind(Intent intent)
 	{
 		Log.i(SERVICE_TAG , "Service onUnbind()");
+		countDownTimer.cancel();
 		return super.onUnbind(intent);
 	}
 
@@ -55,7 +60,82 @@ public class MyService extends Service
 	public IBinder onBind(Intent intent)
 	{
 		Log.i(SERVICE_TAG , "Service onBind()");
-		Toast.makeText(this, intent.getStringExtra("TotalTime"), Toast.LENGTH_LONG).show();
+		
+		totalTime = intent.getExtras().getInt("TotalTime");
+		Toast.makeText(this, "total time : " + Integer.toString(totalTime), Toast.LENGTH_LONG).show();
+		
+		vibrator = (Vibrator) getApplication().getSystemService(Service.VIBRATOR_SERVICE);
+		
+		startCount();
+		
 		return myBinder;
+	}
+	
+	private void startCount()
+	{
+		countDownTimer = new MyCountDownTimer(totalTime /** 60*/ * 1000, 1000);
+		countDownTimer.start();
+	}
+	
+	private class MyCountDownTimer extends CountDownTimer
+	{
+		public MyCountDownTimer(long millisInFuture, long countDownInterval)
+		{
+			super(millisInFuture, countDownInterval);
+		}
+
+		@Override
+		public void onFinish()
+		{
+			vibrator.vibrate(VIBRATOR_TIME);
+			try
+			{
+				Thread.sleep(VIBRATOR_TIME);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+
+			// end();
+		}
+
+		@Override
+		public void onTick(long millisUntilFinished)
+		{
+			String str = "離滿體時間約剩餘："
+					+ Long.toString(millisUntilFinished / 1000 / 60) + " : "
+					+ Long.toString(millisUntilFinished / 1000 % 60);
+			
+			//set Broadcast sent the time String to Activity
+			Intent intent = new Intent("time.CountDownTimer.powerCalculate");
+			intent.putExtra("remain_time", str);
+			sendBroadcast(intent);
+			
+			// showNotification(str);
+			// edtHours.setText(str);
+		}
+
+		/*// set notification
+		private void showNotification(String string)
+		{
+			Notification notification = new Notification(R.drawable.bear,
+					"體力計算器執行中", System.currentTimeMillis());
+
+			Intent intent = new Intent();
+			intent.setClass(getBaseContext(), MainActivity.class);
+			intent.setFlags(intent.FLAG_ACTIVITY_NEW_TASK);
+
+			PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+					intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+			notification.setLatestEventInfo(this,
+					getResources().getText(R.string.app_name), string,
+					pendingIntent);
+
+			NotificationManager notificationManager = (NotificationManager) this
+					.getSystemService(NOTIFICATION_SERVICE);
+			notificationManager.notify(NOTI_ID, notification); // 送出訊息並且設定notification編號
+		}*/
 	}
 }

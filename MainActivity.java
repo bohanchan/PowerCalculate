@@ -6,16 +6,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.support.v4.app.NotificationCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -217,10 +214,13 @@ public class MainActivity extends Activity
 	{
 		if (vibrator != null)
 			vibrator.cancel();
+		//if (countDownTimer != null)
+			//countDownTimer.cancel();
 		btnStart.setText("開始倒數");
 		edtTime.setText(getHoursString());
 
 		vibrator = null;
+		//countDownTimer = null;
 
 		// 找到notification服務並結束
 		((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(NOTI_ID);
@@ -230,32 +230,6 @@ public class MainActivity extends Activity
 	public void setStart()
 	{
 		start = !start;
-	}
-	
-	// set notification
-	private void showNotification(String string)
-	{
-		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this);
-		
-		notificationBuilder.setContentTitle("體力計算器執行中");
-		notificationBuilder.setContentText(string);
-		notificationBuilder.setTicker("體力計算器執行中");
-		notificationBuilder.setSmallIcon(R.drawable.bear);
-		
-
-		Intent intent = new Intent();
-		intent.setClass(this, MainActivity.class);
-		////////////////////////查一下到底參數是啥
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-				intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		notificationBuilder.setContentIntent(pendingIntent);
-
-		NotificationManager notificationManager = (NotificationManager) this
-				.getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(NOTI_ID, notificationBuilder.build()); // 送出訊息並且設定notification編號
 	}
 
 	// connection for service
@@ -283,7 +257,6 @@ public class MainActivity extends Activity
 		{
 			String time = intent.getStringExtra("remain_time");
 			edtTime.setText(time);
-			showNotification(time);
 		}
 	}
 }

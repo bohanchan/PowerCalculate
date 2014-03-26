@@ -115,5 +115,27 @@ public class MyService extends Service
 			// showNotification(str);
 			// edtHours.setText(str);
 		}
+
+		/*// set notification
+		private void showNotification(String string)
+		{
+			Notification notification = new Notification(R.drawable.bear,
+					"體力計算器執行中", System.currentTimeMillis());
+
+			Intent intent = new Intent();
+			intent.setClass(getBaseContext(), MainActivity.class);
+			intent.setFlags(intent.FLAG_ACTIVITY_NEW_TASK);
+
+			PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+					intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+			notification.setLatestEventInfo(this,
+					getResources().getText(R.string.app_name), string,
+					pendingIntent);
+
+			NotificationManager notificationManager = (NotificationManager) this
+					.getSystemService(NOTIFICATION_SERVICE);
+			notificationManager.notify(NOTI_ID, notification); // 送出訊息並且設定notification編號
+		}*/
 	}
 }
